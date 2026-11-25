@@ -279,6 +279,7 @@ aside{width:364px;box-shadow:-2px 0 12px rgba(24,58,88,.04)}
     <button class="btn" id="importBtn" data-inspector-id="html:c312a95e:20">导入</button>
     <button class="btn" id="exportBtn" data-inspector-id="html:c312a95e:21">导出 JSON</button>
     <button class="btn" id="saveHtmlBtn" data-inspector-id="html:c312a95e:22">保存 HTML</button>
+    <button class="btn primary" id="onlineSaveBtn" title="提交到线上，约1分钟后所有人生效">在线保存</button>
     <button class="btn ghost" id="resetBtn" data-inspector-id="html:c312a95e:23">恢复初始</button>
   </div>
 </header>
@@ -703,7 +704,7 @@ function exportJson(){
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
-function saveHtml(){
+function buildHtml(){
   const data = pure(root, '', true);
   const dataTxt = JSON.stringify(data).replace(/</g, '\\u003c');
   const clone = document.documentElement.cloneNode(true);
@@ -723,7 +724,11 @@ function saveHtml(){
     }
     sc.textContent = out.join('\n');
   });
-  const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+  return '<!DOCTYPE html>\n' + clone.outerHTML;
+}
+
+function saveHtml(){
+  const html = buildHtml();
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});
   const a = document.createElement('a');
   const d = new Date();
@@ -737,6 +742,67 @@ function saveHtml(){
   const st = $('#saveState');
   st.textContent = '已生成 ' + fn;
   setTimeout(() => save(true), 1400);
+}
+
+const GH_API = 'https://api.github.com/repos/zuozuo925/mulushu/contents/index.html';
+
+function b64FromUtf8(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '', i = 0, CH = 8192;
+  while(i < bytes.length){
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    i += CH;
+  }
+  return btoa(bin);
+}
+
+function loadBaseSha(){
+  fetch(GH_API, {headers:{Accept:'application/vnd.github+json'}, cache:'no-store'})
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if(j && j.sha) window.__baseSha = j.sha; })
+    .catch(() => {});
+}
+
+async function onlineSave(){
+  let token = localStorage.getItem('kb_gh_token');
+  if(!token){
+    token = prompt('请输入 GitHub 访问令牌（Fine-grained，仅勾选 mulushu 仓库 Contents 读写）：');
+    if(!token) return;
+    localStorage.setItem('kb_gh_token', token.trim());
+  }
+  const st = $('#saveState');
+  st.textContent = '正在提交到线上…';
+  try{
+    const h = {Authorization:'Bearer ' + token.trim(), Accept:'application/vnd.github+json'};
+    const g = await fetch(GH_API, {headers:h, cache:'no-store'});
+    if(!g.ok) throw new Error('读取线上版本失败（' + g.status + '），令牌无效或权限不足');
+    const meta = await g.json();
+    if(window.__baseSha && meta.sha !== window.__baseSha){
+      if(!confirm('线上版本已被他人修改，继续保存将覆盖对方的改动，是否继续？')){
+        st.textContent = '已取消';
+        return;
+      }
+    }
+    const body = {
+      message: '页面在线更新 ' + new Date().toLocaleString('zh-CN'),
+      content: b64FromUtf8(buildHtml()),
+      sha: meta.sha,
+      branch: 'main'
+    };
+    const p = await fetch(GH_API, {method:'PUT', headers:Object.assign({}, h, {'Content-Type':'application/json'}), body:JSON.stringify(body)});
+    if(!p.ok){
+      const e = await p.json().catch(() => ({}));
+      throw new Error('提交失败（' + p.status + '）' + (e.message ? '：' + e.message : ''));
+    }
+    const res = await p.json();
+    window.__baseSha = res.content.sha;
+    st.textContent = '已提交线上，约1分钟后生效';
+    setTimeout(() => save(true), 1200);
+    alert('已提交到线上，约1分钟后所有打开该网址的人都能看到最新目录树。');
+  }catch(err){
+    st.textContent = '在线保存失败：' + err.message;
+    alert('在线保存失败：' + err.message);
+  }
 }
 
 function importJson(file){
@@ -954,6 +1020,8 @@ $('#fileInput').addEventListener('change', e => {
 });
 $('#exportBtn').onclick = exportJson;
 $('#saveHtmlBtn').onclick = saveHtml;
+$('#onlineSaveBtn').onclick = onlineSave;
+loadBaseSha();
 $('#resetBtn').onclick = () => {
   if(!confirm('恢复为导入时的原始目录树？当前编辑内容将丢失。')) return;
   localStorage.removeItem(LS_KEY);
