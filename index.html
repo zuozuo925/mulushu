@@ -82,6 +82,51 @@ aside{flex:none;width:332px;background:#fff;border-left:1px solid var(--line);ov
 .hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto}
 .ph{color:#95a1ad;font-size:12.5px;padding:6px 2px}
 @media (max-width:880px){aside{display:none}.search{min-width:170px}.search input{width:130px}}
+
+/* ===== 视觉增强：字号放大 + 层级配色 ===== */
+body{font-size:14.5px;background:#e9eff6}
+.bar{padding:12px 18px;box-shadow:0 2px 10px rgba(24,58,88,.06)}
+h1{font-size:18px}
+.sub{font-size:12.5px}
+.logo{width:40px;height:40px;font-size:17px;border-radius:10px}
+.search{height:36px;min-width:280px}
+.search input{font-size:14.5px;width:230px}
+.btn,.chip{height:36px;font-size:13.5px}
+.btn{padding:0 14px}
+.ops button{height:36px;font-size:13.5px;border-radius:9px}
+main{background:#e9eff6}
+#treeWrap{margin:12px;border-radius:14px;background:#fff;
+  box-shadow:0 4px 18px rgba(24,58,88,.08),0 1px 3px rgba(24,58,88,.05);padding:6px 0 40px;border:1px solid #dfe7f0}
+#treeWrap::-webkit-scrollbar{width:10px;height:10px}
+#treeWrap::-webkit-scrollbar-thumb{background:#c6d4e3;border-radius:6px}
+#treeWrap::-webkit-scrollbar-track{background:transparent}
+#tree{min-width:820px}
+.node{min-height:46px;height:auto;padding-top:8px;padding-bottom:8px;gap:9px;border-bottom:1px solid #edf1f7}
+.node:hover{background:#f2f8fe}
+.node[data-depth="0"]{background:linear-gradient(90deg,#e2eefb 0%,#f1f8fe 55%,#fff 100%);border-bottom:2px solid #d6e5f4}
+.node[data-depth="1"]{background:#f5f9fd}
+.node[data-depth="2"]{background:#fbfdff}
+.node[data-depth="0"]:hover,.node[data-depth="1"]:hover,.node[data-depth="2"]:hover{background:#eaf4fd}
+.twist{width:18px;font-size:13px}
+.ico{width:19px;height:19px}
+.nm{font-size:15px;line-height:1.55}
+.node[data-depth="0"] .nm{font-size:21px;font-weight:700;color:#123c5c;letter-spacing:.6px}
+.node[data-depth="1"] .nm{font-size:19px;font-weight:600;color:#1f4e79}
+.node[data-depth="2"] .nm{font-size:17px;font-weight:600;color:#2a5476}
+.node[data-depth="3"] .nm{font-size:16px;font-weight:500;color:#3a4b5c}
+.node[data-depth="4"] .nm{font-size:15.3px;color:#475869}
+.node[data-depth="5"] .nm,.node[data-depth="6"] .nm,.node[data-depth="7"] .nm,
+.node[data-depth="8"] .nm,.node[data-depth="9"] .nm{font-size:14.6px;color:#5b6a78}
+.badge{font-size:12.5px;padding:2px 9px}
+.act{width:26px;height:26px;font-size:15px}
+.ren{height:30px;font-size:inherit}
+aside{width:364px;box-shadow:-2px 0 12px rgba(24,58,88,.04)}
+.nd-name{font-size:17.5px}
+.pt{font-size:12px}
+.tag{font-size:12px;padding:2px 9px}
+.kv{font-size:13.5px}
+.kv b{width:56px}
+.foot{height:36px;font-size:12.5px}
 </style>
 <style type="text/css">.qa-sdk-wrapper {
   position: fixed;
@@ -396,7 +441,7 @@ function rowHtml(n, depth, hit){
   const open = query ? hasKids : expanded.has(n._uid);
   const cls = ['node'];
   if(selected === n._uid) cls.push('sel');
-  return '<div class="' + cls.join(' ') + '" data-uid="' + n._uid + '" draggable="true" style="padding-left:' + (10 + depth * 18) + 'px">'
+  return '<div class="' + cls.join(' ') + '" data-depth="' + depth + '" data-uid="' + n._uid + '" draggable="true" style="padding-left:' + (12 + depth * 24) + 'px">'
     + '<span class="twist' + (hasKids ? '' : ' leaf') + (open ? ' open' : '') + '" data-act="twist">▸</span>'
     + iconSvg(n, open)
     + '<span class="nm' + (hit ? ' hit' : '') + '">' + esc(n.name) + '</span>'
